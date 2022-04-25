@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# Colors
+NC='\033[0m'
+Black='\033[0;30m'
+Red='\033[0;31m'
+Green='\033[0;32m'
+Yellow='\033[0;33m'
+White='\033[0;37m'
+BBlack='\033[1;30m'
+On_Red='\033[41m'
+
+# Collect staged GO files
+FILES=$(git diff --staged --name-only | grep ".go$")
+
+if [[ "$FILES" = "" ]]; then
+    echo "${Yellow}No GO files were staged, skip GO formatters${NC}"
+    exit 0
+fi
+
+# Check for goimports
+GOIMPORTS=$GOPATH/bin/goimports
+
+if [[ ! -x "$GOIMPORTS" ]]; then
+    # use 'go get golang.org/x/tools/cmd/goimports' if GO version < 1.17
+    echo "${White}${On_Red}goimports not found${NC} ${BBlack}(go install golang.org/x/tools/cmd/goimports)${NC}"
+    exit 1
+fi
+
+echo #linebreak
+
+PASS=true
+
+for FILE in $FILES
+do
+    # goimports
+    $GOIMPORTS -w $FILE
+
+    # go vet
+    go vet $FILE
+    if [[ $? != 0 ]]; then
+        echo "\t${Black}${On_Red}FAILED${NC} ${Red}go vet $FILE${NC}\n"
+        echo #linebreak
+        PASS=false
+    fi
+done
+
+if ! $PASS; then
+    echo "${Red}Commit FAILED${NC}"
+    exit 1
+fi
+
+echo "${Green}Commit SUCCEEDED${NC}"
+exit 0
