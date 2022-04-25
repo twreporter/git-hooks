@@ -1,6 +1,8 @@
 # git-hooks
 
-Git hooks for GO pre-commit format by gofmt
+Git hooks for GO pre-commit format by gofmt.
+
+This script will run `goimports` and `go vet` to format and validate the files.
 
 ## Install
 
